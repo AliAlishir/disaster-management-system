@@ -27,7 +27,8 @@ class VolunteerProfile(Base):
     __tablename__ = "volunteer_profiles"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    # === رفع باگ تکرار: هر کاربر فقط دقیقاً یک پروفایل می‌تواند داشته باشد ===
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     province = Column(String, nullable=True)
     city = Column(String, nullable=True)
     can_deploy = Column(Boolean, default=False)
@@ -44,7 +45,10 @@ class Message(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    receiver_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # اگر None باشد یعنی پیام همگانی است
+    # === رفع باگ خوانده‌شدن پیام برای همه ===
+    # دیگر هیچ پیامی receiver_id خالی (پیام مشترک بین همه) نخواهد داشت؛
+    # پیام‌های همگانی هم از این پس به‌ازای هر کاربر یک رکورد جداگانه دارند
+    receiver_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     title = Column(String, nullable=False)
     body = Column(String, nullable=False)
     category = Column(String, default="سیستمی")  # ماموریت، سیستمی

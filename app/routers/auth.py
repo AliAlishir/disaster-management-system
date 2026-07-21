@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models.user import User, OTPCode, VolunteerProfile
+from app.models.user import User, OTPCode
 from app.schemas.user import RequestOTPSchema, VerifyOTPSchema, TokenSchema
 from app.services.auth import create_access_token
 
@@ -12,12 +12,9 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 @router.post("/send-otp")
 def send_otp(data: RequestOTPSchema, db: Session = Depends(get_db)):
     phone = data.phone_number
-
-    # بررسی اینکه آیا کاربر قبلاً ثبت‌نام کرده است؟
     existing_user = db.query(User).filter(User.phone_number == phone).first()
     is_registered = True if existing_user else False
 
-    # کد ۴ رقمی شبیه‌سازی‌شده (برای رئیس کل کد ثابت ۱۲۳۴)
     code = "1234" if phone == "09120000000" else f"{random.randint(1000, 9999)}"
 
     otp_entry = db.query(OTPCode).filter(OTPCode.phone_number == phone).first()
@@ -33,7 +30,7 @@ def send_otp(data: RequestOTPSchema, db: Session = Depends(get_db)):
     return {
         "message": "کد تایید ارسال شد",
         "simulated_code": code,
-        "is_registered": is_registered  # اطلاع به فرانت‌اند که کاربر قدیمی است یا جدید
+        "is_registered": is_registered
     }
 
 @router.post("/verify-otp", response_model=TokenSchema)
@@ -44,7 +41,6 @@ def verify_otp(data: VerifyOTPSchema, db: Session = Depends(get_db)):
 
     user = db.query(User).filter(User.phone_number == data.phone_number).first()
 
-    # اگر کاربر جدید است، ثبت‌نامش می‌کنیم
     if not user:
         if not data.full_name:
             raise HTTPException(status_code=400, detail="لطفاً نام و نام خانوادگی خود را وارد کنید.")
@@ -61,19 +57,9 @@ def verify_otp(data: VerifyOTPSchema, db: Session = Depends(get_db)):
         db.add(user)
         db.commit()
         db.refresh(user)
+        # توجه: دیگر پروفایل داوطلبی پیش‌فرض اینجا ساخته نمی‌شود.
+        # کاربر باید یک‌بار فرم "اعلام داوطلبی" را تکمیل کند تا پروفایلش ساخته شود.
 
-        if role == "VOLUNTEER":
-            prof = VolunteerProfile(
-                user_id=user.id,
-                province="تهران",
-                city="تهران",
-                can_deploy=False,
-                bio=""
-            )
-            db.add(prof)
-            db.commit()
-
-    # اگر کاربر از قبل وجود دارد، توکن ورودی صادر می‌شود
     token_data = {
         "sub": str(user.id),
         "phone": user.phone_number,

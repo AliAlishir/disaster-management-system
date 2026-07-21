@@ -23,6 +23,14 @@ class MissionCreateSchema(BaseModel):
 class InviteVolunteerSchema(BaseModel):
     volunteer_id: int
 
+
+def _check_mission_access(mission: Mission, current_user: User):
+    if not mission:
+        raise HTTPException(status_code=404, detail="ماموریت یافت نشد.")
+    if current_user.role != "ADMIN" and mission.creator_id != current_user.id:
+        raise HTTPException(status_code=403, detail="شما فقط به ماموریت‌های خودتان دسترسی دارید.")
+
+
 @router.post("/")
 def create_mission(data: MissionCreateSchema, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.role not in ["ADMIN", "OPERATOR"]:
@@ -44,6 +52,7 @@ def create_mission(data: MissionCreateSchema, db: Session = Depends(get_db), cur
     db.refresh(mission)
     return {"message": "ماموریت با موفقیت ایجاد شد", "mission_id": mission.id}
 
+
 @router.get("/my-missions")
 def get_missions(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user.role == "ADMIN":
@@ -64,21 +73,23 @@ def get_missions(db: Session = Depends(get_db), current_user: User = Depends(get
         } for m in missions
     ]
 
+
 @router.get("/{mission_id}/match")
 def match_volunteers(mission_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    mission = db.query(Mission).filter(Mission.id == mission_id).first()
+    _check_mission_access(mission, current_user)
     return calculate_smart_match(mission_id, db)
+
 
 @router.post("/{mission_id}/invite")
 def invite_volunteer(mission_id: int, data: InviteVolunteerSchema, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     mission = db.query(Mission).filter(Mission.id == mission_id).first()
-    if not mission:
-        raise HTTPException(status_code=404, detail="ماموریت یافت نشد.")
+    _check_mission_access(mission, current_user)
 
     volunteer = db.query(User).filter(User.id == data.volunteer_id, User.role == "VOLUNTEER").first()
     if not volunteer:
         raise HTTPException(status_code=404, detail="داوطلب مورد نظر یافت نشد.")
 
-    # ثبت پیام دعوت در صندوق داوطلب
     msg = Message(
         sender_id=current_user.id,
         receiver_id=volunteer.id,
