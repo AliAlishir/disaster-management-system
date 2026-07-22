@@ -9,7 +9,9 @@ class Mission(Base):
     title = Column(String, nullable=False)
     province = Column(String, index=True, nullable=False)
     city = Column(String, index=True, nullable=False)
-    address = Column(String, nullable=True)
+
+    # آدرس کامل محل ماموریت - اکنون اجباری است (در متن پیام دعوت استفاده می‌شود)
+    address = Column(String, nullable=False)
 
     # دیگر مهارت ضروری/امتیازی جدا نداریم، فقط یک دسته مهارت مورد نیاز
     required_skills = Column(JSON, default=[])

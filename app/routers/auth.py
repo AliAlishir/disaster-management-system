@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User, OTPCode
 from app.schemas.user import RequestOTPSchema, VerifyOTPSchema, TokenSchema
-from app.services.auth import create_access_token
+from app.services.auth import create_access_token, get_current_user
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -75,4 +75,30 @@ def verify_otp(data: VerifyOTPSchema, db: Session = Depends(get_db)):
         "role": user.role,
         "full_name": user.full_name,
         "is_approved": user.is_approved
+    }
+
+
+@router.get("/me", response_model=TokenSchema)
+def get_me(current_user: User = Depends(get_current_user)):
+    """
+    === رفع نیاز: بروزرسانی زنده وضعیت کاربر ===
+    get_current_user کاربر را همیشه به‌صورت مستقیم و به‌روز از دیتابیس می‌خواند،
+    بنابراین این مسیر همیشه آخرین وضعیت تایید/نقش کاربر را برمی‌گرداند، بدون نیاز
+    به خروج و ورود مجدد. کافیست فرانت‌اند این مسیر را در زمان بارگذاری صفحه صدا بزند.
+    """
+    token_data = {
+        "sub": str(current_user.id),
+        "phone": current_user.phone_number,
+        "role": current_user.role,
+        "name": current_user.full_name,
+        "approved": current_user.is_approved
+    }
+    access_token = create_access_token(data=token_data)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "role": current_user.role,
+        "full_name": current_user.full_name,
+        "is_approved": current_user.is_approved
     }

@@ -11,6 +11,7 @@
         .card { border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .badge-dot { height: 10px; width: 10px; background-color: #dc3545; border-radius: 50%; display: inline-block; position: absolute; top: 5px; right: 5px; }
         .skills-box .form-check { margin-left: 1rem; }
+        table { font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -32,8 +33,8 @@
 
     <!-- تب‌های منو -->
     <ul class="nav nav-pills mb-4" id="mainTabs">
-        <li class="nav-item">
-            <button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#tab-vol">🙋‍♂️ اعلام داوطلبی</button>
+        <li class="nav-item" id="nav-vol" style="display:none;">
+            <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-vol">🙋‍♂️ اعلام داوطلبی</button>
         </li>
         <li class="nav-item" id="nav-inbox" style="display:none;">
             <button class="nav-link fw-bold position-relative" data-bs-toggle="pill" data-bs-target="#tab-msg" onclick="loadMessages()">
@@ -52,8 +53,18 @@
     </ul>
 
     <div class="tab-content">
+
+        <!-- ۰. پیام خوش‌آمدگویی پیش از ورود - رفع نیاز: دسترسی به هیچ فرمی از جمله داوطلبی قبل از ورود وجود ندارد -->
+        <div class="tab-pane fade show active" id="tab-welcome">
+            <div class="card p-5 text-center">
+                <h4 class="fw-bold mb-3">🔒 برای دسترسی به سامانه ابتدا وارد شوید</h4>
+                <p class="text-muted">برای اعلام داوطلبی، مشاهده پیام‌ها یا مدیریت ماموریت‌ها لازم است با شماره تلفن همراه خود وارد سیستم شوید.</p>
+                <div><button class="btn btn-primary fw-bold px-4" onclick="showAuthModal()">📲 ورود / ثبت‌نام با پیامک</button></div>
+            </div>
+        </div>
+
         <!-- ۱. اعلام داوطلبی -->
-        <div class="tab-pane fade show active" id="tab-vol">
+        <div class="tab-pane fade" id="tab-vol">
             <div class="card p-4">
                 <h5 class="fw-bold mb-3">ثبت مشخصات داوطلبی و توانایی‌ها</h5>
                 <form id="volForm" onsubmit="saveVolunteerProfile(event)">
@@ -95,7 +106,15 @@
                         <div class="col-md-6"><input type="text" id="misTitle" class="form-control" placeholder="عنوان ماموریت" required></div>
                         <div class="col-md-3"><select id="misProv" class="form-select" onchange="updateCities('misProv', 'misCity')" required><option value="">استان...</option></select></div>
                         <div class="col-md-3"><select id="misCity" class="form-select" required><option value="">شهر...</option></select></div>
-                        <div class="col-md-6"><label class="form-label">تاریخ و ساعت ماموریت</label><input type="datetime-local" id="misDate" class="form-control" required></div>
+
+                        <div class="col-md-8">
+                            <label class="form-label">آدرس کامل محل ماموریت</label>
+                            <input type="text" id="misAddress" class="form-control" placeholder="مثلا: خیابان ولیعصر، نبش کوچه ۱۲، پلاک ۵" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">تاریخ و ساعت ماموریت</label>
+                            <input type="datetime-local" id="misDate" class="form-control" required>
+                        </div>
 
                         <div class="col-12">
                             <label class="form-label fw-bold">مهارت‌های مورد نیاز (می‌توانید چند گزینه انتخاب کنید):</label>
@@ -126,6 +145,7 @@
 
             <div class="card p-4 mb-4">
                 <h5 class="fw-bold text-danger mb-3">👨‍✈️ مدیریت حساب ماموران ستاد بحران</h5>
+                <p class="text-muted small mb-3">ماموران در انتظار تایید ابتدا نمایش داده می‌شوند. برای ماموران تاییدشده دیگر گزینه تایید/رد وجود ندارد.</p>
                 <div id="pendingOpsList">در حال بارگذاری ماموران...</div>
             </div>
 
@@ -183,11 +203,38 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const iranData = {
-        "تهران": ["تهران", "شهریار", "ری", "اسلامشهر"],
-        "البرز": ["کرج", "فردیس", "هشتگرد"],
-        "اصفهان": ["اصفهان", "کاشان", "خمینی‌شهر"],
-        "خوزستان": ["اهواز", "دزفول", "آبادان"]
-    };
+    "آذربایجان شرقی": ["تبریز", "مراغه", "مرند", "اهر", "بناب", "میانه", "شبستر", "سراب", "هریس", "اسکو"],
+    "آذربایجان غربی": ["ارومیه", "خوی", "مهاباد", "بوکان", "میاندوآب", "سلماس", "نقده", "پیرانشهر", "شاهین‌دژ", "ماکو"],
+    "اردبیل": ["اردبیل", "پارس‌آباد", "مشگین‌شهر", "خلخال", "گرمی", "نمین", "بیله‌سوار", "کوثر", "سرعین", "اصلاندوز"],
+    "اصفهان": ["اصفهان", "کاشان", "خمینی‌شهر", "نجف‌آباد", "شاهین‌شهر", "فولادشهر", "آران و بیدگل", "گلپایگان", "نطنز", "سمیرم"],
+    "البرز": ["کرج", "فردیس", "نظرآباد", "هشتگرد", "محمدشهر", "کمال‌شهر", "ماهدشت", "اشتهارد", "طالقان"],
+    "ایلام": ["ایلام", "دهلران", "ایوان", "آبدانان", "دره‌شهر", "مهران", "سرابله", "ارکواز"],
+    "بوشهر": ["بوشهر", "برازجان", "گناوه", "خورموج", "کنگان", "دیر", "عسلویه", "جم", "دیلم"],
+    "تهران": ["تهران", "ری", "شهریار", "اسلامشهر", "قدس", "ورامین", "پاکدشت", "رباط‌کریم", "دماوند", "فیروزکوه", "پردیس", "ملارد", "قرچک", "باقرشهر", "نسیم‌شهر"],
+    "چهارمحال و بختیاری": ["شهرکرد", "بروجن", "فارسان", "لردگان", "فرخ‌شهر", "سامان", "کیان", "هفشجان"],
+    "خراسان جنوبی": ["بیرجند", "قائن", "فردوس", "طبس", "نهبندان", "سرایان", "بشرویه"],
+    "خراسان رضوی": ["مشهد", "نیشابور", "سبزوار", "تربت حیدریه", "قوچان", "کاشمر", "تایباد", "خواف", "چناران", "گناباد"],
+    "خراسان شمالی": ["بجنورد", "شیروان", "اسفراین", "فاروج", "جاجرم", "آشخانه"],
+    "خوزستان": ["اهواز", "آبادان", "خرمشهر", "دزفول", "اندیمشک", "ماهشهر", "بهبهان", "شادگان", "ایذه", "شوش", "شوشتر", "رامهرمز", "هندیجان"],
+    "زنجان": ["زنجان", "ابهر", "خرمدره", "قیدار", "ماهنشان", "سلطانیه"],
+    "سمنان": ["سمنان", "شاهرود", "دامغان", "گرمسار", "مهدی‌شهر", "ایوانکی"],
+    "سیستان و بلوچستان": ["زاهدان", "زابل", "چابهار", "ایرانشهر", "خاش", "سراوان", "نیک‌شهر", "کنارک", "زهک"],
+    "فارس": ["شیراز", "مرودشت", "جهرم", "فسا", "کازرون", "لار", "داراب", "اقلید", "آباده", "نی‌ریز", "فیروزآباد"],
+    "قزوین": ["قزوین", "الوند", "آبیک", "تاکستان", "بوئین‌زهرا", "محمدیه"],
+    "قم": ["قم", "جعفریه", "کهک", "دستجرد", "قنوات"],
+    "کردستان": ["سنندج", "سقز", "مریوان", "بانه", "قروه", "بیجار", "کامیاران", "دیواندره"],
+    "کرمان": ["کرمان", "سیرجان", "رفسنجان", "جیرفت", "بم", "زرند", "شهربابک", "کهنوج", "بافت"],
+    "کرمانشاه": ["کرمانشاه", "اسلام‌آباد غرب", "جوانرود", "پاوه", "سنقر", "هرسین", "کنگاور", "صحنه"],
+    "کهگیلویه و بویراحمد": ["یاسوج", "دوگنبدان", "دهدشت", "لیکک", "سی‌سخت"],
+    "گلستان": ["گرگان", "گنبد کاووس", "علی‌آباد", "آق‌قلا", "بندرترکمن", "مینودشت", "کردکوی", "آزادشهر"],
+    "گیلان": ["رشت", "انزلی", "لاهیجان", "لنگرود", "آستارا", "رودسر", "فومن", "صومعه‌سرا", "تالش"],
+    "لرستان": ["خرم‌آباد", "بروجرد", "دورود", "الیگودرز", "کوهدشت", "نورآباد", "ازنا", "الشتر"],
+    "مازندران": ["ساری", "بابل", "آمل", "قائم‌شهر", "بهشهر", "چالوس", "تنکابن", "رامسر", "نوشهر", "جویبار"],
+    "مرکزی": ["اراک", "ساوه", "خمین", "محلات", "دلیجان", "شازند", "تفرش"],
+    "هرمزگان": ["بندرعباس", "قشم", "کیش", "میناب", "بندر لنگه", "حاجی‌آباد", "رودان", "جاسک"],
+    "همدان": ["همدان", "ملایر", "نهاوند", "تویسرکان", "اسدآباد", "کبودرآهنگ", "رزن"],
+    "یزد": ["یزد", "میبد", "اردکان", "بافق", "مهریز", "تفت", "ابرکوه"]
+};
 
     // === باید دقیقاً با app/constants.py::SKILL_CHOICES یکسان باشد ===
     const SKILL_CHOICES = [
@@ -270,46 +317,96 @@
             localStorage.setItem('role', data.role);
             localStorage.setItem('name', data.full_name);
             localStorage.setItem('approved', data.is_approved);
-            location.reload();
+            bootstrap.Modal.getInstance(document.getElementById('authModal'))?.hide();
+            setupUI();
         } else alert(data.detail);
     }
 
+    function logout() { localStorage.clear(); setupUI(); }
+
+    // === رفع نیاز: بروزرسانی زنده وضعیت تایید کاربر، بدون نیاز به خروج و ورود مجدد ===
+    async function refreshUserStatus() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        try {
+            const res = await fetch('/api/auth/me', { headers: {'Authorization': `Bearer ${token}`} });
+            if (res.ok) {
+                const data = await res.json();
+                localStorage.setItem('token', data.access_token);
+                localStorage.setItem('role', data.role);
+                localStorage.setItem('name', data.full_name);
+                localStorage.setItem('approved', data.is_approved);
+            } else if (res.status === 401) {
+                localStorage.clear();
+            }
+        } catch (err) {
+            // در صورت قطعی موقت شبکه، اطلاعات محلی موجود حفظ می‌شود
+        }
+    }
+
+    function activateTab(paneId) {
+        document.querySelectorAll('.tab-content > .tab-pane').forEach(p => p.classList.remove('show', 'active'));
+        document.querySelectorAll('#mainTabs .nav-link').forEach(b => b.classList.remove('active'));
+        const pane = document.getElementById(paneId);
+        if (pane) pane.classList.add('show', 'active');
+        const btn = document.querySelector(`#mainTabs button[data-bs-target="#${paneId}"]`);
+        if (btn) btn.classList.add('active');
+    }
+
+    // === رفع نیاز: قبل از ورود هیچ تب یا فرمی (حتی داوطلبی) در دسترس نیست
+    //     و پس از ورود فقط تب‌های مخصوص نقش همان کاربر نمایش داده می‌شود ===
     function setupUI() {
+        const token = localStorage.getItem('token');
         const role = localStorage.getItem('role');
         const approved = localStorage.getItem('approved') === 'true';
 
+        document.getElementById('nav-vol').style.display = 'none';
         document.getElementById('nav-inbox').style.display = 'none';
         document.getElementById('nav-create-mis').style.display = 'none';
         document.getElementById('nav-manage-mis').style.display = 'none';
         document.getElementById('nav-chief').style.display = 'none';
         document.getElementById('unapprovedAlert').style.display = 'none';
 
-        if (role) {
-            const roleTitle = role === 'ADMIN' ? 'رئیس کل' : (role === 'OPERATOR' ? 'مامور' : 'داوطلب');
-            document.getElementById('authBox').innerHTML = `
-                <span class="badge bg-primary fs-6 me-2">👤 ${localStorage.getItem('name')} (${roleTitle})</span>
-                <button onclick="logout()" class="btn btn-outline-danger btn-sm fw-bold">خروج</button>
-            `;
+        if (!token) {
+            document.getElementById('authBox').innerHTML = `<button class="btn btn-primary fw-bold" onclick="showAuthModal()">📲 ورود / ثبت‌نام با پیامک</button>`;
+            activateTab('tab-welcome');
+            return;
+        }
 
+        const roleTitle = role === 'ADMIN' ? 'رئیس کل' : (role === 'OPERATOR' ? 'مامور' : 'داوطلب');
+        document.getElementById('authBox').innerHTML = `
+            <span class="badge bg-primary fs-6 me-2">👤 ${localStorage.getItem('name')} (${roleTitle})</span>
+            <button onclick="logout()" class="btn btn-outline-danger btn-sm fw-bold">خروج</button>
+        `;
+
+        if (role === 'VOLUNTEER') {
+            document.getElementById('nav-vol').style.display = 'block';
             document.getElementById('nav-inbox').style.display = 'block';
             checkUnreadMessages();
-
-            if (role === 'OPERATOR') {
-                if (approved) {
-                    document.getElementById('nav-create-mis').style.display = 'block';
-                    document.getElementById('nav-manage-mis').style.display = 'block';
-                } else {
-                    document.getElementById('unapprovedAlert').style.display = 'block';
-                }
-            } else if (role === 'ADMIN') {
+            activateTab('tab-vol');
+        } else if (role === 'OPERATOR') {
+            document.getElementById('nav-inbox').style.display = 'block';
+            checkUnreadMessages();
+            if (approved) {
                 document.getElementById('nav-create-mis').style.display = 'block';
                 document.getElementById('nav-manage-mis').style.display = 'block';
-                document.getElementById('nav-chief').style.display = 'block';
+                activateTab('tab-manage-mis');
+                loadMyMissions();
+            } else {
+                document.getElementById('unapprovedAlert').style.display = 'block';
+                activateTab('tab-msg');
+                loadMessages();
             }
+        } else if (role === 'ADMIN') {
+            document.getElementById('nav-inbox').style.display = 'block';
+            document.getElementById('nav-create-mis').style.display = 'block';
+            document.getElementById('nav-manage-mis').style.display = 'block';
+            document.getElementById('nav-chief').style.display = 'block';
+            checkUnreadMessages();
+            activateTab('tab-chief');
+            loadChiefPanel();
         }
     }
-
-    function logout() { localStorage.clear(); location.reload(); }
 
     async function checkUnreadMessages() {
         const token = localStorage.getItem('token');
@@ -331,7 +428,7 @@
             msgs.forEach(m => {
                 const borderClass = m.is_read ? 'border-secondary' : 'border-primary bg-light';
                 html += `
-                <div class="card p-3 mb-2 border-start border-4 ${borderClass}" onclick="markAsRead(${m.id})" style="cursor: pointer;">
+                <div class="card p-3 mb-2 border-start border-4 ${borderClass}" onclick="markAsRead(${m.id})" style="cursor: pointer; white-space: pre-line;">
                     <div class="d-flex justify-content-between">
                         <h6 class="fw-bold m-0">${m.title} ${!m.is_read ? '<span class="badge bg-danger ms-1">جدید 🆕</span>' : ''}</h6>
                         <small class="text-muted">${m.created_at}</small>
@@ -353,6 +450,7 @@
         loadMessages();
     }
 
+    // === رفع نیاز: ماموریت‌های باز ابتدا و خاتمه‌یافته‌ها انتها نمایش داده می‌شوند (ترتیب از بک‌اند می‌آید) ===
     async function loadMyMissions() {
         const token = localStorage.getItem('token');
         const res = await fetch('/api/missions/my-missions', { headers: {'Authorization': `Bearer ${token}`} });
@@ -364,16 +462,22 @@
         } else {
             missions.forEach(m => {
                 const skillsBadge = (m.required_skills || []).map(s => `<span class="badge bg-secondary me-1">${s}</span>`).join('');
+                const isCompleted = m.status === 'COMPLETED';
                 html += `
-                <div class="card p-3 mb-3 border">
+                <div class="card p-3 mb-3 border ${isCompleted ? 'bg-light' : ''}">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold text-primary m-0">${m.title}</h5>
+                        <h5 class="fw-bold ${isCompleted ? 'text-secondary' : 'text-primary'} m-0">${m.title}</h5>
                         <div>
-                            <button onclick="openMatchModal(${m.id}, '${m.title}')" class="btn btn-outline-primary btn-sm fw-bold">🎯 تطبیق و دعوت نیرو</button>
-                            <span class="badge bg-success ms-2">${m.status}</span>
+                            ${isCompleted ? `
+                                <span class="badge bg-secondary fs-6">خاتمه یافته</span>
+                            ` : `
+                                <button onclick="openMatchModal(${m.id}, '${m.title}')" class="btn btn-outline-primary btn-sm fw-bold">🎯 تطبیق و دعوت نیرو</button>
+                                <button onclick="completeMission(${m.id})" class="btn btn-outline-danger btn-sm fw-bold ms-1">🏁 خاتمه ماموریت</button>
+                                <span class="badge bg-success ms-2">باز</span>
+                            `}
                         </div>
                     </div>
-                    <div class="mt-2 text-muted small">📍 موقعیت: ${m.province} - ${m.city} | 🗓️ تاریخ ماموریت: ${m.mission_date}</div>
+                    <div class="mt-2 text-muted small">📍 موقعیت: ${m.province} - ${m.city} | 🏠 آدرس: ${m.address} | 🗓️ تاریخ ماموریت: ${m.mission_date}</div>
                     <div class="mt-2">مهارت‌های مورد نیاز: ${skillsBadge}</div>
                 </div>`;
             });
@@ -381,6 +485,21 @@
         document.getElementById('myMissionsList').innerHTML = html;
     }
 
+    async function completeMission(missionId) {
+        if (!confirm('آیا از خاتمه این ماموریت اطمینان دارید؟ پس از خاتمه دیگر امکان ارسال درخواست کمک برای آن وجود نخواهد داشت.')) return;
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/missions/${missionId}/complete`, {
+            method: 'POST',
+            headers: {'Authorization': `Bearer ${token}`}
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(data.message);
+            loadMyMissions();
+        } else alert(data.detail);
+    }
+
+    // === رفع نیاز: نمایش "دعوت شده" به‌جای دکمه ارسال، برای داوطلبانی که قبلاً دعوت شده‌اند ===
     async function openMatchModal(missionId, missionTitle) {
         document.getElementById('matchMissionTitle').innerText = `ماموریت: ${missionTitle}`;
         document.getElementById('matchResultsList').innerHTML = '<div class="text-center p-3">در حال محاسبه...</div>';
@@ -400,6 +519,9 @@
                     return `<span class="badge ${isMatched ? 'bg-success' : 'bg-secondary'} me-1">${s}</span>`;
                 }).join('');
                 const localBadge = v.is_local ? '<span class="badge bg-success ms-1">بومی</span>' : '<span class="badge bg-warning text-dark ms-1">نیازمند اعزام</span>';
+                const actionBtn = v.already_invited
+                    ? `<button class="btn btn-secondary btn-sm fw-bold" disabled>دعوت شده ✅</button>`
+                    : `<button onclick="inviteVolunteer(${missionId}, ${v.volunteer_id}, '${v.volunteer_name}')" class="btn btn-success btn-sm fw-bold">ارسال پیام دعوت 📩</button>`;
                 html += `
                 <div class="card p-3 mb-2 border bg-light">
                     <div class="d-flex justify-content-between align-items-center">
@@ -407,7 +529,7 @@
                             <h6 class="fw-bold m-0">${v.volunteer_name} <span class="badge bg-primary ms-2">مهارت مشترک: ${v.match_count} از ${v.total_required}</span> ${localBadge}</h6>
                             <small class="text-muted">📍 ${v.province} - ${v.city} | ⭐ امتیاز: ${v.rating}</small>
                         </div>
-                        <button onclick="inviteVolunteer(${missionId}, ${v.volunteer_id}, '${v.volunteer_name}')" class="btn btn-success btn-sm fw-bold">ارسال پیام دعوت 📩</button>
+                        ${actionBtn}
                     </div>
                     <div class="mt-2 small">مهارت‌های داوطلب: ${vSkills || 'ثبت نشده'}</div>
                 </div>`;
@@ -424,10 +546,15 @@
             body: JSON.stringify({volunteer_id: volunteerId})
         });
         const data = await res.json();
-        if(res.ok) alert(`دعوت‌نامه برای ${volunteerName} ارسال شد!`);
+        if(res.ok) {
+            alert(`دعوت‌نامه برای ${volunteerName} ارسال شد!`);
+            const currentTitle = document.getElementById('matchMissionTitle').innerText.replace('ماموریت: ', '');
+            openMatchModal(missionId, currentTitle);
+        }
         else alert(data.detail);
     }
 
+    // === رفع نیاز: لیست ماموران با تاییدنشده‌ها ابتدا (بدون دکمه برای تاییدشده‌ها) + لیست کامل کاربران/داوطلبان/ماموریت‌ها ===
     async function loadChiefPanel() {
         const token = localStorage.getItem('token');
 
@@ -439,24 +566,51 @@
             opsHtml = '<div class="alert alert-success m-0">هیچ ماموری ثبت‌نام نکرده است.</div>';
         } else {
             operators.forEach(op => {
-                const statusBadge = op.is_approved ? '<span class="badge bg-success">تایید شده ✅</span>' : '<span class="badge bg-danger">در انتظار تایید ❌</span>';
-                opsHtml += `
-                <div class="d-flex justify-content-between align-items-center mb-2 p-3 bg-white rounded border">
-                    <div><b>${op.full_name}</b> (📱 ${op.phone_number}) - ${statusBadge}</div>
-                    <div>
-                        <button onclick="approveOp(${op.id}, 'approve')" class="btn btn-success btn-sm fw-bold">تایید ✅</button>
-                        <button onclick="approveOp(${op.id}, 'reject')" class="btn btn-danger btn-sm fw-bold ms-1">رد ❌</button>
-                    </div>
-                </div>`;
+                if (op.is_approved) {
+                    opsHtml += `
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-3 bg-white rounded border">
+                        <div><b>${op.full_name}</b> (📱 ${op.phone_number})</div>
+                        <span class="badge bg-success">تایید شده ✅</span>
+                    </div>`;
+                } else {
+                    opsHtml += `
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-3 bg-white rounded border border-warning">
+                        <div><b>${op.full_name}</b> (📱 ${op.phone_number}) <span class="badge bg-danger ms-1">در انتظار تایید</span></div>
+                        <div>
+                            <button onclick="approveOp(${op.id}, 'approve')" class="btn btn-success btn-sm fw-bold">تایید ✅</button>
+                            <button onclick="approveOp(${op.id}, 'reject')" class="btn btn-danger btn-sm fw-bold ms-1">رد ❌</button>
+                        </div>
+                    </div>`;
+                }
             });
         }
         document.getElementById('pendingOpsList').innerHTML = opsHtml;
 
         const resData = await fetch('/api/admin/all-data', { headers: {'Authorization': `Bearer ${token}`} });
         const allData = await resData.json();
+
+        let usersHtml = '<div class="table-responsive"><table class="table table-sm table-bordered align-middle"><thead class="table-light"><tr><th>نام</th><th>تلفن</th><th>نقش</th><th>وضعیت</th></tr></thead><tbody>';
+        allData.users.forEach(u => {
+            usersHtml += `<tr><td>${u.name}</td><td>${u.phone}</td><td>${u.role}</td><td>${u.approved ? 'فعال' : 'در انتظار تایید'}</td></tr>`;
+        });
+        usersHtml += '</tbody></table></div>';
+
+        let volsHtml = '<div class="table-responsive"><table class="table table-sm table-bordered align-middle"><thead class="table-light"><tr><th>نام</th><th>تلفن</th><th>استان/شهر</th><th>مهارت‌ها</th><th>آماده اعزام</th></tr></thead><tbody>';
+        (allData.volunteers || []).forEach(v => {
+            volsHtml += `<tr><td>${v.name}</td><td>${v.phone}</td><td>${v.province} - ${v.city}</td><td>${(v.skills || []).join('، ') || '-'}</td><td>${v.can_deploy ? 'بله' : 'خیر'}</td></tr>`;
+        });
+        volsHtml += '</tbody></table></div>';
+
+        let missionsHtml = '<div class="table-responsive"><table class="table table-sm table-bordered align-middle"><thead class="table-light"><tr><th>عنوان</th><th>موقعیت</th><th>آدرس</th><th>وضعیت</th></tr></thead><tbody>';
+        allData.missions.forEach(m => {
+            missionsHtml += `<tr><td>${m.title}</td><td>${m.province} - ${m.city}</td><td>${m.address || '-'}</td><td>${m.status === 'COMPLETED' ? 'خاتمه یافته' : 'باز'}</td></tr>`;
+        });
+        missionsHtml += '</tbody></table></div>';
+
         document.getElementById('allSystemData').innerHTML = `
-            <p>👥 <b>تعداد کل کاربران:</b> ${allData.users.length}</p>
-            <p>📋 <b>تعداد کل ماموریت‌ها:</b> ${allData.missions.length}</p>
+            <h6 class="fw-bold mt-2">👥 کاربران (${allData.users.length})</h6>${usersHtml}
+            <h6 class="fw-bold mt-4">🙋‍♂️ داوطلبان (${(allData.volunteers || []).length})</h6>${volsHtml}
+            <h6 class="fw-bold mt-4">📋 ماموریت‌ها (${allData.missions.length})</h6>${missionsHtml}
         `;
     }
 
@@ -475,10 +629,15 @@
             title: document.getElementById('misTitle').value,
             province: document.getElementById('misProv').value,
             city: document.getElementById('misCity').value,
+            address: document.getElementById('misAddress').value,
             required_skills: getCheckedSkills('misSkillsBox'),
             mission_date: document.getElementById('misDate').value
         };
 
+        if (!payload.address || !payload.address.trim()) {
+            alert('لطفاً آدرس کامل محل ماموریت را وارد کنید.');
+            return;
+        }
         if (payload.required_skills.length === 0) {
             alert('لطفاً حداقل یک مهارت مورد نیاز انتخاب کنید.');
             return;
@@ -543,11 +702,13 @@
         } else alert(data.detail);
     }
 
-    window.onload = () => {
+    window.onload = async () => {
         initProvinces();
-        setupUI();
         renderSkillCheckboxes('volSkillsBox', 'volSkill');
         renderSkillCheckboxes('misSkillsBox', 'misSkill');
+        // === رفع نیاز: بروزرسانی زنده وضعیت تایید/نقش کاربر با هر بارگذاری صفحه ===
+        await refreshUserStatus();
+        setupUI();
     };
 </script>
 </body>

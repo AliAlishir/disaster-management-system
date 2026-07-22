@@ -7,9 +7,15 @@ class MissionCreateSchema(BaseModel):
     title: str
     province: str
     city: str
-    address: Optional[str] = None
+    address: str
     required_skills: List[str]
     mission_date: datetime
+
+    @field_validator("address")
+    def validate_address(cls, v):
+        if not v or not v.strip():
+            raise ValueError("آدرس کامل محل ماموریت الزامی است.")
+        return v.strip()
 
     @field_validator("required_skills")
     def validate_skills(cls, v):
@@ -23,4 +29,4 @@ class InviteVolunteerSchema(BaseModel):
 
 class CompleteMissionSchema(BaseModel):
     mission_id: int
-    ratings: dict  # {volunteer_id: rating_number}
+    ratings: dict = {}  # در حال حاضر استفاده نمی‌شود، برای سازگاری آینده نگه داشته شده است

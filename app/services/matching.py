@@ -26,7 +26,7 @@ def calculate_smart_match(mission_id: int, db: Session):
             continue
 
         # ۱. فیلتر شهر / آمادگی اعزام
-        is_local = (prof.city or "").strip().lower() == (mission.city or "").strip().lower()
+        is_local = (prof.province or "").strip().lower() == (mission.province or "").strip().lower()
         if not is_local and not prof.can_deploy:
             continue
 
