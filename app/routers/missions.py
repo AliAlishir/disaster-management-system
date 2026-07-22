@@ -1,27 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Optional
-from pydantic import BaseModel
-from datetime import datetime
 from app.database import get_db
-from app.models.user import User, VolunteerProfile, Message
+from app.models.user import User, Message
 from app.models.mission import Mission
+from app.schemas.mission import MissionCreateSchema, InviteVolunteerSchema
 from app.services.auth import get_current_user
 from app.services.matching import calculate_smart_match
 
 router = APIRouter(prefix="/api/missions", tags=["Missions"])
-
-class MissionCreateSchema(BaseModel):
-    title: str
-    province: str
-    city: str
-    essential_skills: List[str]
-    bonus_skills: Optional[List[str]] = []
-    start_date: datetime
-    end_date: datetime
-
-class InviteVolunteerSchema(BaseModel):
-    volunteer_id: int
 
 
 def _check_mission_access(mission: Mission, current_user: User):
@@ -40,10 +26,9 @@ def create_mission(data: MissionCreateSchema, db: Session = Depends(get_db), cur
         title=data.title,
         province=data.province,
         city=data.city,
-        essential_skills=data.essential_skills,
-        bonus_skills=data.bonus_skills,
-        start_date=data.start_date,
-        end_date=data.end_date,
+        address=data.address,
+        required_skills=data.required_skills,
+        mission_date=data.mission_date,
         creator_id=current_user.id,
         status="OPEN"
     )
@@ -66,7 +51,8 @@ def get_missions(db: Session = Depends(get_db), current_user: User = Depends(get
             "title": m.title,
             "province": m.province,
             "city": m.city,
-            "essential_skills": m.essential_skills,
+            "required_skills": m.required_skills,
+            "mission_date": m.mission_date.strftime("%Y-%m-%d %H:%M"),
             "status": m.status,
             "creator_id": m.creator_id,
             "created_at": m.created_at.strftime("%Y-%m-%d %H:%M")
@@ -89,6 +75,14 @@ def invite_volunteer(mission_id: int, data: InviteVolunteerSchema, db: Session =
     volunteer = db.query(User).filter(User.id == data.volunteer_id, User.role == "VOLUNTEER").first()
     if not volunteer:
         raise HTTPException(status_code=404, detail="داوطلب مورد نظر یافت نشد.")
+
+    # === رفع نیاز اصلی: جلوگیری از ارسال پیام تکراری به یک داوطلب برای همان ماموریت ===
+    already_invited = db.query(Message).filter(
+        Message.mission_id == mission.id,
+        Message.receiver_id == volunteer.id
+    ).first()
+    if already_invited:
+        raise HTTPException(status_code=400, detail="قبلاً برای این داوطلب در این ماموریت پیام دعوت ارسال شده است.")
 
     msg = Message(
         sender_id=current_user.id,

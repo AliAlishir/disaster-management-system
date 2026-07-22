@@ -2,6 +2,7 @@ import re
 from pydantic import BaseModel, field_validator
 from typing import List, Optional
 from datetime import datetime
+from app.constants import SKILL_CHOICES
 
 # 1. اسکیماهای احراز هویت پیامکی (OTP)
 class RequestOTPSchema(BaseModel):
@@ -18,12 +19,6 @@ class VerifyOTPSchema(BaseModel):
     code: str
     full_name: Optional[str] = None
     role: Optional[str] = "VOLUNTEER"
-    province: Optional[str] = None
-    city: Optional[str] = None
-    can_deploy: Optional[bool] = False
-    bio_text: Optional[str] = None
-    available_from: Optional[datetime] = None
-    available_to: Optional[datetime] = None
 
 class TokenSchema(BaseModel):
     access_token: str
@@ -32,23 +27,27 @@ class TokenSchema(BaseModel):
     full_name: str
     is_approved: bool
 
-# 2. اسکیماهای کاربر و ثبت نام
+# 2. اسکیمای ثبت‌نام عمومی کاربر (در صورت نیاز آینده)
 class UserRegisterSchema(BaseModel):
     full_name: str
     phone_number: str
     role: Optional[str] = "VOLUNTEER"
     password: Optional[str] = None
 
-# 3. اسکیماهای مربوط به داوطلبان
+# 3. اسکیمای ثبت/بروزرسانی داوطلب - دیگر بیوگرافی متنی و استخراج هوش مصنوعی وجود ندارد.
+#    کاربر مستقیماً از بین لیست ثابت SKILL_CHOICES، مهارت‌های خود را انتخاب می‌کند (چندگزینه‌ای).
 class VolunteerRegisterSchema(BaseModel):
-    full_name: str
-    phone_number: str
     province: str
     city: str
-    can_deploy: Optional[bool] = False
-    bio: Optional[str] = None
-    available_from: Optional[datetime] = None
-    available_to: Optional[datetime] = None
+    can_deploy: bool = False
+    skills: List[str] = []
+    available_from: datetime
+    available_to: datetime
+
+    @field_validator("skills")
+    def validate_skills(cls, v):
+        # هر مقداری که در لیست استاندارد مهارت‌ها نباشد، نادیده گرفته می‌شود
+        return [s for s in v if s in SKILL_CHOICES]
 
 class VolunteerResponseSchema(BaseModel):
     id: int

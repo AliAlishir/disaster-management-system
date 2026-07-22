@@ -1,22 +1,27 @@
 from sqlalchemy.orm import Session
 from app.models.mission import Mission
 from app.models.user import User, VolunteerProfile
-from app.services.ai_service import evaluate_semantic_match
 
 
 def calculate_smart_match(mission_id: int, db: Session):
+    """
+    الگوریتم تطبیق بدون هوش مصنوعی:
+    1) فقط داوطلبانی در نظر گرفته می‌شوند که یا در همان شهر ماموریت هستند
+       یا تیک «آمادگی اعزام» را فعال کرده‌اند.
+    2) تاریخ ماموریت باید داخل بازه زمانی آزادی داوطلب (available_from تا available_to) باشد.
+    3) از بین باقی‌مانده‌ها، تعداد مهارت‌های مشترک با مهارت‌های موردنیاز ماموریت محاسبه می‌شود
+       و نتایج بر اساس بیشترین اشتراک مهارت (و در مرحله بعد بومی بودن و امتیاز) مرتب می‌شوند.
+    """
     mission = db.query(Mission).filter(Mission.id == mission_id).first()
     if not mission:
         return None
 
+    required = set(mission.required_skills or [])
     profiles = db.query(VolunteerProfile).join(User).filter(User.role == "VOLUNTEER").all()
+
     results = []
-
-    essential_req = mission.essential_skills or []
-    bonus_req = mission.bonus_skills or []
-
     for prof in profiles:
-        # پروفایل‌های ناقص (بدون شهر یا زمان آزادی) در تطبیق شرکت داده نمی‌شوند
+        # پروفایل ناقص (بدون شهر یا بازه زمانی آزادی) در تطبیق شرکت داده نمی‌شود
         if not prof.city or not prof.available_from or not prof.available_to:
             continue
 
@@ -25,28 +30,16 @@ def calculate_smart_match(mission_id: int, db: Session):
         if not is_local and not prof.can_deploy:
             continue
 
-        # ۲. هم‌پوشانی زمانی
-        if not (prof.available_from <= mission.start_date and prof.available_to >= mission.end_date):
+        # ۲. بررسی اینکه تاریخ ماموریت داخل بازه زمانی آزادی داوطلب است یا نه
+        if not (prof.available_from <= mission.mission_date <= prof.available_to):
             continue
 
-        vol_skills = prof.skills or []
+        # ۳. شمارش مهارت‌های مشترک
+        vol_skills = set(prof.skills or [])
+        matched_skills = required.intersection(vol_skills)
+        match_count = len(matched_skills)
 
-        # ۳. سنجش معنایی هوش مصنوعی برای مهارت ضروری (وزن ۷۰٪) و امتیازی (وزن ۳۰٪)
-        essential_score = evaluate_semantic_match(vol_skills, essential_req)
-        bonus_score = evaluate_semantic_match(vol_skills, bonus_req) if bonus_req else 0.0
-
-        if bonus_req:
-            skill_percent = (essential_score * 70) + (bonus_score * 30)
-        else:
-            skill_percent = essential_score * 100
-
-        # ۴. ماتریس امتیازدهی نهایی: مهارت ۶۰٪ + مکان ۲۵٪ + سابقه/امتیاز ۱۵٪
-        weighted_skill = (skill_percent / 100) * 60
-        weighted_location = (100 if is_local else 50) / 100 * 25
         user_rating = prof.rating if prof.rating is not None else 5.0
-        weighted_rating = (user_rating / 5.0) * 15
-
-        total_score = round(weighted_skill + weighted_location + weighted_rating, 1)
 
         results.append({
             "volunteer_id": prof.user.id,
@@ -57,17 +50,14 @@ def calculate_smart_match(mission_id: int, db: Session):
             "is_local": is_local,
             "needs_deployment": not is_local,
             "rating": user_rating,
-            "skills": vol_skills,
-            "score_breakdown": {
-                "total_score": total_score,
-                "semantic_skill_match": round(skill_percent, 1),
-                "proximity_bonus": "بومی" if is_local else "نیازمند اعزام",
-                "rating_bonus": user_rating
-            }
+            "skills": list(vol_skills),
+            "matched_skills": list(matched_skills),
+            "match_count": match_count,
+            "total_required": len(required),
         })
 
-    # مرتب‌سازی بر اساس بالاترین امتیاز تطبیق کل - مرتبط‌ترین‌ها اول نمایش داده می‌شوند
-    results.sort(key=lambda x: x["score_breakdown"]["total_score"], reverse=True)
+    # مرتب‌سازی: اول بیشترین تعداد مهارت مشترک، سپس بومی بودن، سپس بالاترین امتیاز
+    results.sort(key=lambda x: (x["match_count"], x["is_local"], x["rating"]), reverse=True)
 
     return {
         "mission_id": mission.id,

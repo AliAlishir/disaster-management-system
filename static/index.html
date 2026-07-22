@@ -10,6 +10,7 @@
         body { font-family: 'Vazirmatn', sans-serif; background-color: #f4f6f9; }
         .card { border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .badge-dot { height: 10px; width: 10px; background-color: #dc3545; border-radius: 50%; display: inline-block; position: absolute; top: 5px; right: 5px; }
+        .skills-box .form-check { margin-left: 1rem; }
     </style>
 </head>
 <body>
@@ -54,14 +55,26 @@
         <!-- ۱. اعلام داوطلبی -->
         <div class="tab-pane fade show active" id="tab-vol">
             <div class="card p-4">
-                <h5 class="fw-bold mb-3">ثبت مشخصات داوطلبی و توانمندی‌ها</h5>
+                <h5 class="fw-bold mb-3">ثبت مشخصات داوطلبی و توانایی‌ها</h5>
                 <form id="volForm" onsubmit="saveVolunteerProfile(event)">
                     <div class="row g-3">
                         <div class="col-md-3"><select id="volProv" class="form-select" onchange="updateCities('volProv', 'volCity')" required><option value="">انتخاب استان...</option></select></div>
                         <div class="col-md-3"><select id="volCity" class="form-select" required><option value="">انتخاب شهر...</option></select></div>
                         <div class="col-md-3"><label class="form-label">از تاریخ</label><input type="datetime-local" id="volFrom" class="form-control" required></div>
                         <div class="col-md-3"><label class="form-label">تا تاریخ</label><input type="datetime-local" id="volTo" class="form-control" required></div>
-                        <div class="col-12"><textarea id="volBio" class="form-control" rows="3" placeholder="توضیحات، مهارت‌ها و تجهیزات..."></textarea></div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="volDeploy">
+                                <label class="form-check-label fw-bold" for="volDeploy">آمادگی اعزام به سایر شهرها را دارم</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">توانایی‌های شما (می‌توانید چند گزینه انتخاب کنید):</label>
+                            <div id="volSkillsBox" class="skills-box border rounded p-3"></div>
+                        </div>
+
                         <div class="col-12"><button type="submit" class="btn btn-primary fw-bold">ثبت وضعیت داوطلبی</button></div>
                     </div>
                 </form>
@@ -82,10 +95,13 @@
                         <div class="col-md-6"><input type="text" id="misTitle" class="form-control" placeholder="عنوان ماموریت" required></div>
                         <div class="col-md-3"><select id="misProv" class="form-select" onchange="updateCities('misProv', 'misCity')" required><option value="">استان...</option></select></div>
                         <div class="col-md-3"><select id="misCity" class="form-select" required><option value="">شهر...</option></select></div>
-                        <div class="col-md-6"><input type="text" id="misEssential" class="form-control" placeholder="مهارت‌های ضروری (با کاما)" required></div>
-                        <div class="col-md-6"><input type="text" id="misBonus" class="form-control" placeholder="مهارت‌های امتیازی (با کاما)"></div>
-                        <div class="col-md-6"><label class="form-label">زمان شروع</label><input type="datetime-local" id="misStart" class="form-control" required></div>
-                        <div class="col-md-6"><label class="form-label">زمان پایان</label><input type="datetime-local" id="misEnd" class="form-control" required></div>
+                        <div class="col-md-6"><label class="form-label">تاریخ و ساعت ماموریت</label><input type="datetime-local" id="misDate" class="form-control" required></div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">مهارت‌های مورد نیاز (می‌توانید چند گزینه انتخاب کنید):</label>
+                            <div id="misSkillsBox" class="skills-box border rounded p-3"></div>
+                        </div>
+
                         <div class="col-12"><button type="submit" class="btn btn-success fw-bold">ثبت و ایجاد ماموریت</button></div>
                     </div>
                 </form>
@@ -110,17 +126,12 @@
 
             <div class="card p-4 mb-4">
                 <h5 class="fw-bold text-danger mb-3">👨‍✈️ مدیریت حساب ماموران ستاد بحران</h5>
-                <div id="operatorsList">در حال بارگذاری ماموران...</div>
-            </div>
-
-            <div class="card p-4 mb-4">
-                <h5 class="fw-bold text-success mb-3">🙋‍♂️ لیست تمام درخواست‌های داوطلبی ثبت‌شده</h5>
-                <div id="allVolunteersList">در حال بارگذاری داوطلبان...</div>
+                <div id="pendingOpsList">در حال بارگذاری ماموران...</div>
             </div>
 
             <div class="card p-4">
-                <h5 class="fw-bold text-secondary mb-3">📋 لیست تمام ماموریت‌های ثبت‌شده در سیستم</h5>
-                <div id="allMissionsList">در حال بارگذاری ماموریت‌ها...</div>
+                <h5 class="fw-bold text-secondary mb-3">📊 دسترسی کلی به داده‌های سیستم</h5>
+                <div id="allSystemData">در حال بارگذاری...</div>
             </div>
         </div>
     </div>
@@ -131,7 +142,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold">🎯 تطبیق هوشمند و رتبه‌بندی داوطلبان</h5>
+                <h5 class="modal-title fw-bold">🎯 تطبیق و ارسال دعوت به داوطلبان</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -177,6 +188,33 @@
         "اصفهان": ["اصفهان", "کاشان", "خمینی‌شهر"],
         "خوزستان": ["اهواز", "دزفول", "آبادان"]
     };
+
+    // === باید دقیقاً با app/constants.py::SKILL_CHOICES یکسان باشد ===
+    const SKILL_CHOICES = [
+        "حمل و نقل با ماشین شخصی سبک",
+        "حمل و نقل با وانت یا نیسان",
+        "حمل و نقل با ماشین سنگین (کامیون)",
+        "کمک‌های اولیه و پانسمان",
+        "بنایی",
+        "تاسیسات (برق‌کشی، لوله‌کشی و...)",
+        "نیروی ساده",
+        "آشپزی"
+    ];
+
+    function renderSkillCheckboxes(containerId, namePrefix) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        el.innerHTML = SKILL_CHOICES.map((s, i) => `
+            <div class="form-check form-check-inline mb-2">
+                <input class="form-check-input" type="checkbox" value="${s}" id="${namePrefix}_${i}">
+                <label class="form-check-label" for="${namePrefix}_${i}">${s}</label>
+            </div>
+        `).join('');
+    }
+
+    function getCheckedSkills(containerId) {
+        return Array.from(document.querySelectorAll(`#${containerId} input[type=checkbox]:checked`)).map(cb => cb.value);
+    }
 
     function initProvinces() {
         ['volProv', 'misProv'].forEach(id => {
@@ -277,7 +315,7 @@
         const token = localStorage.getItem('token');
         const res = await fetch('/api/messages/my-messages', { headers: {'Authorization': `Bearer ${token}`} });
         const msgs = await res.json();
-        const hasUnread = msgs.some(m => !m.is_read);
+        const hasUnread = Array.isArray(msgs) && msgs.some(m => !m.is_read);
         document.getElementById('unreadDot').style.display = hasUnread ? 'inline-block' : 'none';
     }
 
@@ -325,7 +363,7 @@
             html = '<div class="alert alert-info m-0">هیچ ماموریتی ثبت نشده است.</div>';
         } else {
             missions.forEach(m => {
-                const skillsBadge = (m.essential_skills || []).map(s => `<span class="badge bg-secondary me-1">${s}</span>`).join('');
+                const skillsBadge = (m.required_skills || []).map(s => `<span class="badge bg-secondary me-1">${s}</span>`).join('');
                 html += `
                 <div class="card p-3 mb-3 border">
                     <div class="d-flex justify-content-between align-items-center">
@@ -335,8 +373,8 @@
                             <span class="badge bg-success ms-2">${m.status}</span>
                         </div>
                     </div>
-                    <div class="mt-2 text-muted small">📍 موقعیت: ${m.province} - ${m.city} | 🗓️ ثبت: ${m.created_at}</div>
-                    <div class="mt-2">مهارت‌های ضروری: ${skillsBadge}</div>
+                    <div class="mt-2 text-muted small">📍 موقعیت: ${m.province} - ${m.city} | 🗓️ تاریخ ماموریت: ${m.mission_date}</div>
+                    <div class="mt-2">مهارت‌های مورد نیاز: ${skillsBadge}</div>
                 </div>`;
             });
         }
@@ -345,7 +383,7 @@
 
     async function openMatchModal(missionId, missionTitle) {
         document.getElementById('matchMissionTitle').innerText = `ماموریت: ${missionTitle}`;
-        document.getElementById('matchResultsList').innerHTML = '<div class="text-center p-3">در حال تحلیل هوش مصنوعی...</div>';
+        document.getElementById('matchResultsList').innerHTML = '<div class="text-center p-3">در حال محاسبه...</div>';
         new bootstrap.Modal(document.getElementById('matchModal')).show();
 
         const token = localStorage.getItem('token');
@@ -354,20 +392,24 @@
 
         let html = '';
         if (!data.recommended_volunteers || data.recommended_volunteers.length === 0) {
-            html = '<div class="alert alert-warning m-0">هیچ داوطلبی یافت نشد.</div>';
+            html = '<div class="alert alert-warning m-0">هیچ داوطلب واجد شرایطی (با توجه به شهر/اعزام و بازه زمانی) یافت نشد.</div>';
         } else {
             data.recommended_volunteers.forEach(v => {
-                const vSkills = (v.skills || []).map(s => `<span class="badge bg-info text-dark me-1">${s}</span>`).join('');
+                const vSkills = (v.skills || []).map(s => {
+                    const isMatched = (v.matched_skills || []).includes(s);
+                    return `<span class="badge ${isMatched ? 'bg-success' : 'bg-secondary'} me-1">${s}</span>`;
+                }).join('');
+                const localBadge = v.is_local ? '<span class="badge bg-success ms-1">بومی</span>' : '<span class="badge bg-warning text-dark ms-1">نیازمند اعزام</span>';
                 html += `
                 <div class="card p-3 mb-2 border bg-light">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="fw-bold m-0">${v.volunteer_name} <span class="badge bg-success ms-2">امتیاز: ${v.score_breakdown.total_score}</span></h6>
-                            <small class="text-muted">📍 ${v.province} - ${v.city} | امتیاز کیفی: ${v.rating}</small>
+                            <h6 class="fw-bold m-0">${v.volunteer_name} <span class="badge bg-primary ms-2">مهارت مشترک: ${v.match_count} از ${v.total_required}</span> ${localBadge}</h6>
+                            <small class="text-muted">📍 ${v.province} - ${v.city} | ⭐ امتیاز: ${v.rating}</small>
                         </div>
                         <button onclick="inviteVolunteer(${missionId}, ${v.volunteer_id}, '${v.volunteer_name}')" class="btn btn-success btn-sm fw-bold">ارسال پیام دعوت 📩</button>
                     </div>
-                    <div class="mt-2 small">مهارت‌ها: ${vSkills}</div>
+                    <div class="mt-2 small">مهارت‌های داوطلب: ${vSkills || 'ثبت نشده'}</div>
                 </div>`;
             });
         }
@@ -393,11 +435,11 @@
         const operators = await resOps.json();
 
         let opsHtml = '';
-        if (operators.length === 0) {
+        if (!operators || operators.length === 0) {
             opsHtml = '<div class="alert alert-success m-0">هیچ ماموری ثبت‌نام نکرده است.</div>';
         } else {
             operators.forEach(op => {
-                const statusBadge = op.is_approved ? '<span class="badge bg-success">تایید شده ✅</span>' : '<span class="badge bg-danger">رد شده / در انتظار ❌</span>';
+                const statusBadge = op.is_approved ? '<span class="badge bg-success">تایید شده ✅</span>' : '<span class="badge bg-danger">در انتظار تایید ❌</span>';
                 opsHtml += `
                 <div class="d-flex justify-content-between align-items-center mb-2 p-3 bg-white rounded border">
                     <div><b>${op.full_name}</b> (📱 ${op.phone_number}) - ${statusBadge}</div>
@@ -408,43 +450,14 @@
                 </div>`;
             });
         }
-        document.getElementById('operatorsList').innerHTML = opsHtml;
+        document.getElementById('pendingOpsList').innerHTML = opsHtml;
 
         const resData = await fetch('/api/admin/all-data', { headers: {'Authorization': `Bearer ${token}`} });
         const allData = await resData.json();
-
-        let volsHtml = '';
-        if (allData.volunteers.length === 0) {
-            volsHtml = '<div class="alert alert-info m-0">هیچ داوطلبی ثبت‌نام نکرده است.</div>';
-        } else {
-            allData.volunteers.forEach(v => {
-                const sBadge = (v.skills || []).map(s => `<span class="badge bg-secondary me-1">${s}</span>`).join('');
-                volsHtml += `
-                <div class="card p-3 mb-2 border bg-white">
-                    <h6 class="fw-bold text-success m-0">👤 ${v.name} - 📍 ${v.province}، ${v.city}</h6>
-                    <p class="m-0 mt-1 small text-muted">توضیحات: ${v.bio || 'بدون توضیحات'}</p>
-                    <div class="mt-1">مهارت‌ها: ${sBadge}</div>
-                </div>`;
-            });
-        }
-        document.getElementById('allVolunteersList').innerHTML = volsHtml;
-
-        let missHtml = '';
-        if (allData.missions.length === 0) {
-            missHtml = '<div class="alert alert-info m-0">هیچ ماموریتی ثبت نشده است.</div>';
-        } else {
-            allData.missions.forEach(m => {
-                missHtml += `
-                <div class="card p-3 mb-2 border bg-white d-flex flex-row justify-content-between align-items-center">
-                    <div>
-                        <h6 class="fw-bold text-primary m-0">${m.title}</h6>
-                        <small class="text-muted">📍 موقعیت: ${m.province} - ${m.city}</small>
-                    </div>
-                    <span class="badge bg-success">${m.status}</span>
-                </div>`;
-            });
-        }
-        document.getElementById('allMissionsList').innerHTML = missHtml;
+        document.getElementById('allSystemData').innerHTML = `
+            <p>👥 <b>تعداد کل کاربران:</b> ${allData.users.length}</p>
+            <p>📋 <b>تعداد کل ماموریت‌ها:</b> ${allData.missions.length}</p>
+        `;
     }
 
     async function approveOp(id, action) {
@@ -462,11 +475,14 @@
             title: document.getElementById('misTitle').value,
             province: document.getElementById('misProv').value,
             city: document.getElementById('misCity').value,
-            essential_skills: document.getElementById('misEssential').value.split(',').map(s => s.trim()).filter(s => s),
-            bonus_skills: document.getElementById('misBonus').value ? document.getElementById('misBonus').value.split(',').map(s => s.trim()).filter(s => s) : [],
-            start_date: document.getElementById('misStart').value,
-            end_date: document.getElementById('misEnd').value
+            required_skills: getCheckedSkills('misSkillsBox'),
+            mission_date: document.getElementById('misDate').value
         };
+
+        if (payload.required_skills.length === 0) {
+            alert('لطفاً حداقل یک مهارت مورد نیاز انتخاب کنید.');
+            return;
+        }
 
         const res = await fetch('/api/missions/', {
             method: 'POST',
@@ -477,6 +493,7 @@
         if(res.ok) {
             alert('ماموریت با موفقیت ثبت شد!');
             document.getElementById('misForm').reset();
+            renderSkillCheckboxes('misSkillsBox', 'misSkill');
             loadMyMissions();
         } else alert(data.detail);
     }
@@ -487,11 +504,10 @@
         if(!token) { alert('لطفا ابتدا وارد شوید.'); return; }
 
         const payload = {
-            full_name: localStorage.getItem('name'),
-            phone_number: "09000000000",
             province: document.getElementById('volProv').value,
             city: document.getElementById('volCity').value,
-            bio: document.getElementById('volBio').value,
+            can_deploy: document.getElementById('volDeploy').checked,
+            skills: getCheckedSkills('volSkillsBox'),
             available_from: document.getElementById('volFrom').value,
             available_to: document.getElementById('volTo').value
         };
@@ -502,7 +518,7 @@
             body: JSON.stringify(payload)
         });
         const data = await res.json();
-        if(res.ok) alert('اطلاعات داوطلبی و استخراج هوشمند مهارت‌ها ثبت شد!');
+        if(res.ok) alert('اطلاعات داوطلبی با موفقیت ثبت شد!\nتوانایی‌های انتخابی: ' + (data.skills.join('، ') || 'بدون مهارت انتخابی'));
         else alert(data.detail);
     }
 
@@ -527,7 +543,12 @@
         } else alert(data.detail);
     }
 
-    window.onload = () => { initProvinces(); setupUI(); };
+    window.onload = () => {
+        initProvinces();
+        setupUI();
+        renderSkillCheckboxes('volSkillsBox', 'volSkill');
+        renderSkillCheckboxes('misSkillsBox', 'misSkill');
+    };
 </script>
 </body>
 </html>
