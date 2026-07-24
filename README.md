@@ -47,7 +47,9 @@
 │   └── message_router.py     # صندوق پیام‌ها و Broadcast
 ├── static/                   # فایل‌های فرانت‌اند (HTML/CSS/JS)
 └── README.md                 # مستندات راهنمای پروژه
-🚀 راهنمای نصب و اجرای پروژه
+```
+---
+## 🚀 راهنمای نصب و اجرای پروژه
 پیش‌نیازها
 نصب بودن Python 3.10 یا نسخه‌های بالاتر
 
@@ -56,12 +58,14 @@
 مراحل اجرا
 ۱. کلون کردن مخزن پروژه:
 
-Bash
-git clone [https://github.com/USERNAME/REPO_NAME.git](https://github.com/USERNAME/REPO_NAME.git)
+```text
+git clone [https://github.com/USERNAME/REPO_NAME.git](https://github.com/AliAlishir/disaster-management-system.git)
 cd REPO_NAME
+```
+
 ۲. ایجاد و فعال‌سازی محیط مجازی (Virtual Environment):
 
-Bash
+```text
 # Linux / macOS
 python3 -m venv venv
 source venv/bin/venv/activate
@@ -69,17 +73,20 @@ source venv/bin/venv/activate
 # Windows
 python -m venv venv
 venv\Scripts\activate
+```
 ۳. نصب کتابخانه‌های مورد نیاز:
 
-Bash
+```text
 pip install -r requirements.txt
-۴. اجرای سرور توسعه:
+```
 
-Bash
+۴. اجرای سرور توسعه:
+```text
 uvicorn main:app --reload
+```
 ۵. دسترسی به سامانه:
 
-واسط کاربری (UI): http://127.0.0.1:8000
+واسط کاربری (UI): .0.0.1:8000/static/index.html?
 
 مستندات تعاملی API (Swagger UI): http://127.0.0.1:8000/docs
 
